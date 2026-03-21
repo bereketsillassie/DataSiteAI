@@ -1,0 +1,153 @@
+{
+  "data_contract_version": "1.0.0",
+  "generated_at": "2026-03-21T18:06:43Z",
+  "location": {
+    "city": "Nashville",
+    "state": "Tennessee",
+    "state_code": "TN",
+    "county": "Davidson County",
+    "coordinates": {
+      "latitude": 36.1627,
+      "longitude": -86.7816
+    },
+    "site_address": "Industrial Pkwy, Antioch, TN 37013",
+    "climate_zone": "Mixed-Humid (ASHRAE 3A)",
+    "elevation_ft": 597
+  },
+  "land_metrics": {
+    "land_score": 82,
+    "land_score_breakdown": {
+      "zoning_compatibility": 90,
+      "soil_stability": 78,
+      "flood_risk_score": 74,
+      "seismic_risk_score": 91,
+      "proximity_to_fiber_hubs": 88
+    },
+    "available_acreage": 143.5,
+    "parcel_count": 4,
+    "estimated_land_cost_per_acre_usd": 185000,
+    "total_estimated_land_cost_usd": 26547500,
+    "zoning_type": "Industrial / Heavy Commercial",
+    "current_land_use": "Undeveloped / Light Industrial",
+    "water_access": {
+      "municipal_water_available": true,
+      "nearest_water_source_mi": 0.4,
+      "cooling_water_feasibility_score": 80
+    }
+  },
+  "power_facilities": {
+    "grid_capacity_mw": 480,
+    "committed_capacity_mw": 120,
+    "available_capacity_mw": 360,
+    "primary_utility": "Nashville Electric Service (NES) / TVA",
+    "utility_rate_usd_per_kwh": 0.0712,
+    "demand_charge_usd_per_kw_month": 11.45,
+    "renewable_energy_mix_pct": 22.4,
+    "renewable_sources": ["Hydroelectric", "Nuclear", "Solar PV"],
+    "grid_reliability": {
+      "annual_uptime_pct": 99.984,
+      "saidi_minutes_per_year": 84,
+      "redundancy_tier": "N+1"
+    },
+    "pue_estimates": {
+      "design_target_pue": 1.35,
+      "industry_avg_pue": 1.58,
+      "best_case_pue": 1.28,
+      "worst_case_pue": 1.51
+    },
+    "substation_distance_mi": 1.2,
+    "substation_upgrade_required": false,
+    "estimated_annual_power_cost_usd": 9214080
+  },
+  "environmental_impacts": {
+    "wildlife_impact_score": 34,
+    "wildlife_impact_label": "Low-Moderate",
+    "threatened_species_nearby": ["Indiana Bat (Myotis sodalis)", "Nashville Crayfish (Orconectes shoupi)"],
+    "wetlands_on_site_acres": 2.1,
+    "tree_canopy_loss_acres": 18.4,
+    "natural_carbon_impact": {
+      "estimated_annual_co2_emissions_metric_tons": 54200,
+      "carbon_offset_program_available": true,
+      "net_carbon_after_offsets_metric_tons": 12800,
+      "carbon_intensity_kg_per_kwh": 0.391,
+      "sequestration_loss_from_clearing_metric_tons_co2_yr": 736
+    },
+    "water_usage": {
+      "estimated_annual_water_consumption_gallons": 48200000,
+      "wue_liters_per_kwh": 1.12,
+      "drought_risk_level": "Low"
+    },
+    "noise_pollution_score": 41,
+    "heat_island_contribution_score": 38,
+    "environmental_permit_complexity": "Moderate"
+  },
+  "economic_impacts": {
+    "utility_benefits_for_residents": {
+      "estimated_rate_reduction_pct": 0.8,
+      "infrastructure_investment_usd": 34000000,
+      "grid_stability_improvement_score": 72,
+      "new_substation_funded_by_developer": false
+    },
+    "job_creation": {
+      "construction_jobs": 850,
+      "permanent_operations_jobs": 210,
+      "indirect_local_jobs_estimate": 540
+    },
+    "tax_incentives": {
+      "state_sales_tax_exemption_on_equipment": true,
+      "state_sales_tax_exemption_pct": 100,
+      "property_tax_abatement_available": true,
+      "property_tax_abatement_years": 10,
+      "property_tax_abatement_pct": 65,
+      "tn_fasttrack_program_eligible": true,
+      "estimated_10yr_tax_savings_usd": 18400000,
+      "federal_investment_tax_credit_pct": 6,
+      "opportunity_zone": false
+    },
+    "local_gdp_contribution_annual_usd": 112000000,
+    "supply_chain_spend_local_pct": 34
+  },
+  "roi_projections": {
+    "initial_capex_usd": 420000000,
+    "annual_opex_usd": 31500000,
+    "projected_annual_revenue_usd": 98000000,
+    "five_year_roi": {
+      "roi_pct": 38.4,
+      "cumulative_net_revenue_usd": 161000000,
+      "payback_period_years": 4.8
+    },
+    "ten_year_roi": {
+      "roi_pct": 121.7,
+      "cumulative_net_revenue_usd": 511400000,
+      "payback_period_years": 4.8
+    },
+    "assumptions": {
+      "avg_annual_revenue_growth_pct": 6.5,
+      "avg_opex_inflation_pct": 2.8,
+      "occupancy_ramp_months": 18,
+      "discount_rate_pct": 8.0
+    }
+  },
+  "company_image": {
+    "esg_impact_score": 61,
+    "esg_impact_label": "Positive with Mitigation Required",
+    "sentiment_snippet": "Developing in Nashville aligns with TVA's clean energy transition roadmap and positions the company favorably among Southeast corridor stakeholders. Moderate wildlife mitigation obligations and carbon offset commitments are required to maintain ESG credibility, but strong local job creation and infrastructure investment provide measurable social governance upside.",
+    "stakeholder_sentiment": {
+      "local_government": "Strongly Favorable",
+      "environmental_groups": "Neutral",
+      "community_residents": "Favorable",
+      "media_outlook": "Positive"
+    },
+    "esg_ratings_impact": {
+      "environmental_delta": -2,
+      "social_delta": 5,
+      "governance_delta": 3
+    },
+    "pr_risk_level": "Low",
+    "recommended_community_initiatives": [
+      "Wildlife habitat conservation fund ($2M)",
+      "Local STEM workforce development partnership",
+      "Municipal broadband co-investment"
+    ]
+  }
+}
