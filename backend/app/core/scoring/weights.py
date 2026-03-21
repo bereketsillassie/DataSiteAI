@@ -59,17 +59,19 @@
 
 # -----------------------------------------------------------------------------
 # CATEGORY WEIGHTS
-# Controls how much each of the 7 categories influences the final score.
-# Higher number = more influence on where a data center should be built.
 # -----------------------------------------------------------------------------
 CATEGORY_WEIGHTS: dict[str, float] = {
-    "power":          0.20,   # ← Electrical grid quality and cost
-    "water":          0.15,   # ← Flood risk and water availability
-    "geological":     0.15,   # ← Earthquake risk and terrain
-    "climate":        0.15,   # ← Heat, humidity, and weather disasters
-    "connectivity":   0.10,   # ← Fiber internet and road access
-    "economic":       0.15,   # ← Taxes, land cost, and labor market
-    "environmental":  0.10,   # ← Proximity to people and protected land
+    "power":          0.35,   # Heavy priority (Grid quality & cost)
+    "economic":       0.25,   # Heavy priority (Land cost & taxes)
+    "environmental":  0.20,   # Heavy priority (Proximity & ESG impact)
+    
+    # --- Secondary Categories ---
+    # Kept active at 5% each so the frontend map layers and UI components 
+    # still register data, but they won't overpower the top three metrics.
+    "water":          0.05,   
+    "geological":     0.05,   
+    "climate":        0.05,   
+    "connectivity":   0.05,   
 }
 
 
