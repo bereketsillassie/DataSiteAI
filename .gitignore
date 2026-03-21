@@ -1,0 +1,75 @@
+# =========================
+# Node Modules (ALL folders)
+# =========================
+node_modules/
+**/node_modules/
+
+# =========================
+# Build Outputs
+# =========================
+dist/
+build/
+.out/
+.next/
+coverage/
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# OS Files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# IDE / Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# =========================
+# TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# Cache / Temp
+# =========================
+.cache/
+.tmp/
+.temp/
+.parcel-cache/
+
+# =========================
+# Vite specific
+# =========================
+vite.config.ts.timestamp-*
+
+# =========================
+# Testing
+# =========================
+coverage/
+jest-cache/
+
+# =========================
+# Misc Sensitive Files
+# =========================
+*.pem
+*.key
