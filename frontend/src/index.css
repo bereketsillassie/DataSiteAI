@@ -1,0 +1,99 @@
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f4f6f8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.app-header {
+  height: 72px;
+  padding: 12px 20px;
+  background: #0f172a;
+  color: white;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.app-header p {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-sidebar {
+  width: 280px;
+  background: #ffffff;
+  border-right: 1px solid #dbe1e8;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.app-sidebar h2 {
+  margin-top: 0;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.sidebar-section label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #334155;
+}
+
+.sidebar-section ul {
+  margin: 8px 0 0 18px;
+  padding: 0;
+  color: #475569;
+}
+
+.app-main {
+  flex: 1;
+  padding: 20px;
+  min-width: 0;
+  min-height: 0;
+}
+
+.map-panel {
+  height: 100%;
+  width: 100%;
+  background: white;
+  border: 1px solid #dbe1e8;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+}

@@ -1,0 +1,70 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+      - ./jobs:/app/jobs
+      - ./alembic.ini:/app/alembic.ini
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=DEBUG
+      - MOCK_INTEGRATIONS=true
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/datacenter
+      - REDIS_URL=redis://redis:6379
+      - GOOGLE_CLOUD_PROJECT=local-dev
+      - GCS_BUCKET_NAME=local-dev-bucket
+      - GEE_SERVICE_ACCOUNT=mock@local.dev
+      - GEE_KEY_FILE=/dev/null
+      - EIA_API_KEY=mock
+      - CENSUS_API_KEY=mock
+      - NOAA_API_KEY=mock
+      - AIRNOW_API_KEY=mock
+      - CACHE_TTL_HOURS=24
+      - GEE_CACHE_TTL_HOURS=168
+      - LISTINGS_CACHE_TTL_HOURS=168
+      - GRID_RESOLUTION_DEFAULT_KM=5
+      - MAX_BBOX_AREA_SQ_KM=50000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  db:
+    image: postgis/postgis:15-3.4-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: datacenter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d datacenter"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
