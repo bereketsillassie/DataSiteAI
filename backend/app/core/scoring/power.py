@@ -3,13 +3,17 @@ app/core/scoring/power.py
 ──────────────────────────
 Power & Energy scorer.
 
-Scores each grid cell on 4 sub-metrics:
+Formulas (from CLAUDE.md):
   grid_proximity:   1.0 - clamp(min(dist_substation_km, dist_line_km) / 20.0)
-  electricity_cost: 1.0 - clamp((rate_cents - 5.0) / 15.0)   # 5¢=best, 20¢=worst
+  electricity_cost: 1.0 - clamp((rate_cents - 5.0) / 15.0)   # 5c=best, 20c=worst
   renewable_pct:    renewable_pct / 100.0
   grid_reliability: reliability_index / 100.0
 
 Data sources: OSM (power infrastructure), EIA (rates, reliability)
+
+BATCHING:
+  - osm.get_region_data(bbox) fetches ALL OSM features in one Overpass call
+  - EIA calls are state-level and cached — one call per state, not per cell
 
 NOTE: This scorer reads POWER_SUB_WEIGHTS from weights.py to roll up its own
 sub-metrics. It NEVER reads CATEGORY_WEIGHTS — that is the engine's job only.
@@ -42,51 +46,52 @@ class PowerScorer(BaseScorer):
 
     async def score(self, bbox: BoundingBox) -> list[CellScore]:
         """Score all grid cells in the bbox for power infrastructure."""
-        grid_res = getattr(self.settings, 'GRID_RESOLUTION_DEFAULT_KM', 5.0)
+        grid_res = getattr(self.settings, "GRID_RESOLUTION_DEFAULT_KM", 5.0)
         grid = generate_grid(bbox, cell_size_km=grid_res)
 
+        center_lat, center_lng = bbox.center()
+        state = self._lat_lng_to_state(center_lat, center_lng)
+
+        # ── ONE Overpass call fetches all OSM features for the region ─────────
         try:
-            substations = await self.osm.get_substations(bbox)
-            power_lines = await self.osm.get_power_lines(bbox)
+            osm_data = await self.osm.get_region_data(bbox)
+            substations = osm_data.get("substations", [])
+            power_lines = osm_data.get("power_lines", [])
         except Exception as e:
             logger.error(f"PowerScorer: OSM fetch failed: {e}")
             substations = []
             power_lines = []
 
-        # Determine state from bbox center for EIA queries (simplified: use NC as default)
-        # In production, geocode bbox center to determine the state
-        center_lat, center_lng = bbox.center()
-        state = self._lat_lng_to_state(center_lat, center_lng)
-
+        # ── State-level EIA calls — cached, one per state not per cell ────────
         try:
             electricity_rate = await self.eia.get_retail_electricity_rate(state)
-            renewable_pct = await self.eia.get_renewable_pct(state)
-            reliability = await self.eia.get_reliability_index(state)
+            renewable_pct    = await self.eia.get_renewable_pct(state)
+            reliability      = await self.eia.get_reliability_index(state)
             utility_territories = await self.eia.get_utility_territories(bbox)
         except Exception as e:
             logger.error(f"PowerScorer: EIA fetch failed: {e}")
             electricity_rate = 9.5
-            renewable_pct = 15.0
-            reliability = 70.0
+            renewable_pct    = 15.0
+            reliability      = 70.0
             utility_territories = []
 
-        # Precompute substation and line coordinates for distance calculations
+        # Precompute geometry lookups once — reused for every cell
         substation_coords = self._extract_points(substations)
-        line_coords = self._extract_line_midpoints(power_lines)
+        line_coords       = self._extract_line_midpoints(power_lines)
+        utility_name      = (
+            utility_territories[0].get("properties", {}).get("utility_name", "Unknown")
+            if utility_territories else "Unknown"
+        )
 
-        # Determine utility territory name for the whole bbox
-        utility_name = "Unknown"
-        if utility_territories:
-            utility_name = utility_territories[0].get("properties", {}).get("utility_name", "Unknown")
-
+        # ── Score each cell (pure math, no API calls) ─────────────────────────
         results = []
         for cell in grid:
             try:
-                cell_score = self._score_cell(
+                cs = self._score_cell(
                     cell, substation_coords, line_coords,
-                    electricity_rate, renewable_pct, reliability, utility_name
+                    electricity_rate, renewable_pct, reliability, utility_name,
                 )
-                results.append(cell_score)
+                results.append(cs)
             except Exception as e:
                 logger.warning(f"PowerScorer: cell ({cell.lat},{cell.lng}) failed: {e}")
                 results.append(CellScore(lat=cell.lat, lng=cell.lng, error=str(e)))
@@ -94,41 +99,42 @@ class PowerScorer(BaseScorer):
         return results
 
     def _score_cell(
-        self, cell, substation_coords, line_coords,
-        electricity_rate, renewable_pct, reliability, utility_name
+        self,
+        cell,
+        substation_coords,
+        line_coords,
+        electricity_rate,
+        renewable_pct,
+        reliability,
+        utility_name,
     ) -> CellScore:
         """Score a single grid cell for power infrastructure."""
-        # Calculate distances
+
         dist_substation = self._nearest_point_km(cell.lat, cell.lng, substation_coords)
-        dist_line = self._nearest_point_km(cell.lat, cell.lng, line_coords)
-        best_dist = min(dist_substation, dist_line)
+        dist_line       = self._nearest_point_km(cell.lat, cell.lng, line_coords)
+        best_dist       = min(dist_substation, dist_line)
 
-        # Apply scoring formulas from CLAUDE.md
-        # grid_proximity: 1.0 - clamp(min(dist_substation_km, dist_line_km) / 20.0)
-        grid_proximity_score = 1.0 - self._clamp(best_dist / 20.0)
-
-        # electricity_cost: 1.0 - clamp((rate_cents - 5.0) / 15.0)  # 5¢=best, 20¢=worst
+        # grid_proximity: 1.0 - clamp(min(dist_substation, dist_line) / 20.0)
+        grid_proximity_score  = 1.0 - self._clamp(best_dist / 20.0)
+        # electricity_cost: 1.0 - clamp((rate - 5.0) / 15.0)  5c=best, 20c=worst
         electricity_cost_score = 1.0 - self._clamp((electricity_rate - 5.0) / 15.0)
-
-        # renewable_pct: renewable_pct / 100.0
-        renewable_score = self._clamp(renewable_pct / 100.0)
-
-        # grid_reliability: reliability_index / 100.0
-        reliability_score = self._clamp(reliability / 100.0)
+        # renewable_pct: pct / 100.0
+        renewable_score       = self._clamp(renewable_pct / 100.0)
+        # grid_reliability: index / 100.0
+        reliability_score     = self._clamp(reliability / 100.0)
 
         sub_scores = {
-            "grid_proximity":   round(grid_proximity_score, 4),
+            "grid_proximity":   round(grid_proximity_score,   4),
             "electricity_cost": round(electricity_cost_score, 4),
-            "renewable_pct":    round(renewable_score, 4),
-            "grid_reliability": round(reliability_score, 4),
+            "renewable_pct":    round(renewable_score,        4),
+            "grid_reliability": round(reliability_score,      4),
         }
 
-        # Roll up sub-metrics using POWER_SUB_WEIGHTS
         category_score = self._weighted_sum(sub_scores, POWER_SUB_WEIGHTS)
 
         metrics = {
-            "nearest_transmission_line_km": round(dist_line, 2),
-            "nearest_substation_km":        round(dist_substation, 2),
+            "nearest_transmission_line_km":  round(dist_line, 2),
+            "nearest_substation_km":         round(dist_substation, 2),
             "electricity_rate_cents_per_kwh": electricity_rate,
             "renewable_energy_pct":          renewable_pct,
             "grid_reliability_index":        reliability,
@@ -144,63 +150,42 @@ class PowerScorer(BaseScorer):
         )
 
     def _lat_lng_to_state(self, lat: float, lng: float) -> str:
-        """
-        Very rough state determination from lat/lng.
-        Used for EIA API queries. In production this would use a proper
-        point-in-polygon lookup against state boundaries.
-        """
-        # Simple bounding box checks for common data center states
-        if 33.8 <= lat <= 36.6 and -84.3 <= lng <= -75.5:
-            return "NC"
-        if 37.0 <= lat <= 39.5 and -83.7 <= lng <= -75.2:
-            return "VA"
-        if 25.8 <= lat <= 36.5 and -106.7 <= lng <= -93.5:
-            return "TX"
-        if 30.4 <= lat <= 35.0 and -85.6 <= lng <= -80.8:
-            return "GA"
-        if 34.9 <= lat <= 36.7 and -90.3 <= lng <= -81.6:
-            return "TN"
-        if 36.9 <= lat <= 41.0 and -109.1 <= lng <= -102.0:
-            return "CO"
-        if 31.3 <= lat <= 37.0 and -114.8 <= lng <= -109.0:
-            return "AZ"
-        return "NC"  # Default fallback
+        if 33.8 <= lat <= 36.6 and -84.3 <= lng <= -75.5:  return "NC"
+        if 37.0 <= lat <= 39.5 and -83.7 <= lng <= -75.2:  return "VA"
+        if 25.8 <= lat <= 36.5 and -106.7 <= lng <= -93.5: return "TX"
+        if 30.4 <= lat <= 35.0 and -85.6 <= lng <= -80.8:  return "GA"
+        if 34.9 <= lat <= 36.7 and -90.3 <= lng <= -81.6:  return "TN"
+        if 36.9 <= lat <= 41.0 and -109.1 <= lng <= -102.0:return "CO"
+        if 31.3 <= lat <= 37.0 and -114.8 <= lng <= -109.0:return "AZ"
+        if 24.5 <= lat <= 31.0 and -87.6 <= lng <= -80.0:  return "FL"
+        return "NC"
 
     def _extract_points(self, features: list) -> list[tuple[float, float]]:
-        """Extract (lat, lng) from GeoJSON Point features."""
         coords = []
         for feat in features:
             geom = feat.get("geometry", {})
             if geom.get("type") == "Point":
                 c = geom["coordinates"]
-                coords.append((c[1], c[0]))  # GeoJSON is [lng, lat]
+                coords.append((c[1], c[0]))  # GeoJSON [lng, lat] -> (lat, lng)
         return coords
 
     def _extract_line_midpoints(self, features: list) -> list[tuple[float, float]]:
-        """Extract midpoints from GeoJSON LineString features."""
         coords = []
         for feat in features:
             geom = feat.get("geometry", {})
             if geom.get("type") == "LineString":
-                points = geom["coordinates"]
-                if points:
-                    mid = points[len(points) // 2]
-                    coords.append((mid[1], mid[0]))  # GeoJSON is [lng, lat]
+                pts = geom["coordinates"]
+                if pts:
+                    mid = pts[len(pts) // 2]
+                    coords.append((mid[1], mid[0]))
         return coords
 
-    def _nearest_point_km(self, lat: float, lng: float, points: list[tuple]) -> float:
-        """Find the distance (km) to the nearest point in the list. Returns 999 if empty."""
+    def _nearest_point_km(self, lat: float, lng: float, points: list) -> float:
         if not points:
             return 999.0
-        min_dist = float("inf")
-        for plat, plng in points:
-            d = self._haversine_km(lat, lng, plat, plng)
-            if d < min_dist:
-                min_dist = d
-        return min_dist
+        return min(self._haversine_km(lat, lng, plat, plng) for plat, plng in points)
 
-    def _haversine_km(self, lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-        """Calculate great-circle distance in km between two WGS84 points."""
+    def _haversine_km(self, lat1, lng1, lat2, lng2) -> float:
         R = 6371.0
         dlat = math.radians(lat2 - lat1)
         dlng = math.radians(lng2 - lng1)
