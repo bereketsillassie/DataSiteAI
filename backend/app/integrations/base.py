@@ -4,11 +4,13 @@ app/integrations/base.py
 Base class for all integration clients.
 Every external data source client extends this class.
 
-Key features provided by BaseIntegrationClient:
+Key features:
   - Redis caching (check before fetch, set after fetch)
   - HTTP retry with exponential backoff via tenacity
   - Mock mode: return fixture data when settings.MOCK_INTEGRATIONS=True
   - Typed error handling: always raise IntegrationError, never raw exceptions
+  - follow_redirects=True set globally on the shared HTTP client —
+    do NOT pass it as a kwarg to _fetch_with_retry()
 """
 
 import json
@@ -16,7 +18,12 @@ import logging
 from typing import Any, Optional
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from app.models.domain import IntegrationError
 
@@ -31,19 +38,19 @@ class BaseIntegrationClient:
       1. Set self.source_name (e.g. "eia", "fema") for logging/cache keys
       2. Implement their data-fetching methods
       3. Check self.mock first in each method and return fixture data if True
+
+    IMPORTANT: The shared HTTP client has follow_redirects=True globally.
+    Never pass follow_redirects as a kwarg to _fetch_with_retry() — it is
+    not a supported parameter and will raise a TypeError.
     """
 
     def __init__(self, redis_client=None, settings=None):
-        """
-        Args:
-            redis_client: aioredis.Redis instance (or None to skip caching)
-            settings: app Settings instance
-        """
         from app.config import settings as default_settings
+
         self.redis = redis_client
         self.settings = settings or default_settings
         self.mock = self.settings.MOCK_INTEGRATIONS
-        self.source_name = "base"  # Subclasses override this
+        self.source_name = "base"
         self._http_client: Optional[httpx.AsyncClient] = None
 
     async def _get_http_client(self) -> httpx.AsyncClient:
@@ -52,28 +59,29 @@ class BaseIntegrationClient:
             self._http_client = httpx.AsyncClient(
                 timeout=httpx.Timeout(30.0, connect=10.0),
                 headers={"User-Agent": "DataCenter-Site-Selector/1.0 (contact@example.com)"},
-                follow_redirects=True,
+                follow_redirects=True,  # Handles all redirects globally — do not pass per-call
             )
         return self._http_client
 
     async def close(self):
-        """Close the HTTP client. Call on shutdown."""
+        """Close the HTTP client. Call on app shutdown."""
         if self._http_client and not self._http_client.is_closed:
             await self._http_client.aclose()
 
     # ── Caching ────────────────────────────────────────────────────────────────
 
     def _cache_key(self, operation: str, *args) -> str:
-        """Build a Redis cache key. Format: integration:{source}:{operation}:{args_hash}"""
+        """Build a Redis cache key. Format: integration:{source}:{operation}:{hash}"""
         import hashlib
+
         args_str = ":".join(str(a) for a in args)
         args_hash = hashlib.md5(args_str.encode()).hexdigest()[:12]
         return f"integration:{self.source_name}:{operation}:{args_hash}"
 
     async def _get_cached(self, key: str) -> Optional[Any]:
         """
-        Check Redis for a cached value. Returns the deserialized value or None.
-        Never raises — if Redis is down, just returns None.
+        Check Redis for a cached value. Returns deserialized value or None.
+        Never raises — if Redis is down, returns None and fetches live.
         """
         if self.redis is None:
             return None
@@ -120,6 +128,9 @@ class BaseIntegrationClient:
         Fetch a URL with automatic retry on transport errors.
         Returns the parsed JSON response body.
         Raises IntegrationError on HTTP errors or after all retries fail.
+
+        NOTE: follow_redirects is handled globally on the HTTP client.
+        Do NOT add it as a parameter here.
         """
         client = await self._get_http_client()
         try:
@@ -142,7 +153,6 @@ class BaseIntegrationClient:
                     message=f"HTTP {response.status_code} from {url}: {response.text[:200]}",
                     status_code=response.status_code,
                 )
-
             return response.json()
 
         except IntegrationError:
