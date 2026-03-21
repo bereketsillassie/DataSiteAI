@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "datacenter-site-selector"
+version = "0.1.0"
+description = "Backend for DataCenter Site Selector — scores and ranks land for data center suitability"
+requires-python = ">=3.11"
+dependencies = [
+    # Web framework
+    "fastapi==0.111.0",
+    "uvicorn[standard]==0.29.0",
+    "python-multipart==0.0.9",
+    # Settings
+    "pydantic==2.7.1",
+    "pydantic-settings==2.2.1",
+    # Database
+    "sqlalchemy==2.0.30",
+    "asyncpg==0.29.0",
+    "alembic==1.13.1",
+    "geoalchemy2==0.15.1",
+    # Redis
+    "redis==5.0.4",
+    # HTTP client
+    "httpx==0.27.0",
+    # Geospatial
+    "shapely==2.0.4",
+    "geopandas==0.14.4",
+    "fiona==1.9.6",
+    "pyproj==3.6.1",
+    "rasterio==1.3.10",
+    "rio-tiler==6.4.2",
+    # Google Cloud
+    "google-cloud-storage==2.16.0",
+    "earthengine-api==0.1.400",
+    # Scraping
+    "beautifulsoup4==4.12.3",
+    "lxml==5.2.1",
+    # Utilities
+    "python-dateutil==2.9.0",
+    "tenacity==8.3.0",
+    "orjson==3.10.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.2.0",
+    "pytest-asyncio==0.23.6",
+    "pytest-httpx==0.30.0",
+    "httpx==0.27.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*", "jobs*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
