@@ -69,6 +69,18 @@ coverage/
 jest-cache/
 
 # =========================
+# Python Virtual Environments
+# =========================
+venv/
+.venv/
+**/.venv/
+**/venv/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+
+# =========================
 # Misc Sensitive Files
 # =========================
 *.pem
