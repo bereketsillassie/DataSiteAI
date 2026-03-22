@@ -77,3 +77,6 @@ jest-cache/
 backend/venv/
 __pycache__/
 *.pyc
+backend/stately-avatar-471704-v0-da4c5b7a1471.json
+backend/*.json
+backend/.env
