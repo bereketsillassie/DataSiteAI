@@ -6,6 +6,15 @@ All routers are registered here. CORS is configured here.
 """
 
 import logging
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables BEFORE importing any modules that need them
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(env_path)
+
+from app.chatbot.router import router as chatbot_router
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -79,6 +88,7 @@ app.add_middleware(
 # ── Routers ────────────────────────────────────────────────────────────────────
 from app.api.v1.router import router as v1_router  # noqa: E402
 app.include_router(v1_router, prefix="/api/v1")
+app.include_router(chatbot_router)
 
 
 @app.get("/", include_in_schema=False)
