@@ -3,9 +3,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sparkles, X, Send, Bot, User, Loader2, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
-<<<<<<< HEAD
-import { sendChatMessage } from '@/lib/api'
-=======
 
 // ── Markdown renderer ─────────────────────────────────────────
 function renderInline(text: string): React.ReactNode[] {
@@ -71,7 +68,6 @@ function renderMarkdown(text: string): React.ReactNode {
 
   return <div className="space-y-0.5 text-sm">{nodes}</div>
 }
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
 // ── Types ─────────────────────────────────────────────────────
 interface Message {
@@ -119,14 +115,6 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
       // History sent WITHOUT the message we just added (match backend expectation)
       const history = messages.map(({ role, content }) => ({ role, content }))
 
-<<<<<<< HEAD
-      const data = await sendChatMessage({
-        message: text,
-        history,
-        location_context: locationContext,
-      })
-
-=======
       const payload = {
         message: text,
         history,
@@ -142,7 +130,6 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data: { reply: string } = await res.json()
 
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
       setMessages((prev) => [
         ...prev,
         { id: nextId + 1, role: 'assistant', content: data.reply },
@@ -153,11 +140,7 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
         {
           id: nextId + 1,
           role: 'assistant',
-<<<<<<< HEAD
-          content: '⚠️ Could not connect to the backend AI. Make sure the FastAPI server is running on port 8000.',
-=======
           content: '⚠️ Could not connect to the backend AI. Make sure the FastAPI server is running on port 8001.',
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         },
       ])
     } finally {
@@ -251,15 +234,6 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
               )}
               <div
                 className={cn(
-<<<<<<< HEAD
-                  'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
-                  message.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-br-sm'
-                    : 'bg-secondary/80 backdrop-blur text-foreground border border-border rounded-bl-sm',
-                )}
-              >
-                {message.content}
-=======
                   'max-w-[80%] rounded-2xl px-4 py-2.5',
                   message.role === 'user'
                     ? 'bg-primary text-primary-foreground rounded-br-sm text-sm leading-relaxed'
@@ -269,7 +243,6 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
                 {message.role === 'assistant'
                   ? renderMarkdown(message.content)
                   : message.content}
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
               </div>
               {message.role === 'user' && (
                 <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">

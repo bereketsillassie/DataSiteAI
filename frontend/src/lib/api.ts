@@ -1,4 +1,4 @@
-const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8000'
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? 'http://localhost:8001'
 
 export interface AnalyzeRequest {
   bbox: { min_lat: number; min_lng: number; max_lat: number; max_lng: number }

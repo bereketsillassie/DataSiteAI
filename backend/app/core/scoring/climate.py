@@ -36,23 +36,14 @@ class ClimateScorer(BaseScorer):
 
     category_id = "climate"
 
-<<<<<<< HEAD
     def __init__(self, db_session=None, settings=None):
-=======
-    def __init__(self, redis_client=None, settings=None):
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         from app.integrations.noaa import NOAAClient
         from app.integrations.nasa_power import NASAPowerClient
         from app.config import settings as default_settings
 
         self.settings = settings or default_settings
-<<<<<<< HEAD
         self.noaa = NOAAClient(db_session=db_session, settings=self.settings)
         self.nasa = NASAPowerClient(db_session=db_session, settings=self.settings)
-=======
-        self.noaa = NOAAClient(redis_client=redis_client, settings=self.settings)
-        self.nasa = NASAPowerClient(redis_client=redis_client, settings=self.settings)
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
     async def score(self, bbox: BoundingBox) -> list[CellScore]:
         """

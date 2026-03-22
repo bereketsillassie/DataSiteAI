@@ -9,13 +9,6 @@ import { DataSiteAILogo } from '@/components/DataSiteAILogo'
 import { MapPin } from 'lucide-react'
 import { runAnalysis, fetchLayer, detectState } from '@/lib/api'
 
-interface ActiveOverlays {
-  carbonEmissions: boolean
-  wildfireRisk: boolean
-  floodZone: boolean
-  seismicHazard: boolean
-}
-
 export interface Listing {
   id: string
   address: string | null
@@ -31,36 +24,18 @@ export interface Listing {
 
 export default function App() {
   const [hasStarted, setHasStarted] = useState(false)
-
-  const [selectedLocation, setSelectedLocation] = useState<{
-    lat: number
-    lng: number
-  } | null>(null)
-
-  // ── Incoming UI state ───────────────────────────────────────
-  const [activeOverlays, setActiveOverlays] = useState<ActiveOverlays>({
-    carbonEmissions: true,
-    wildfireRisk: false,
-    floodZone: true,
-    seismicHazard: false,
-  })
-
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [listings, setListings] = useState<Listing[]>([])
-
-  // ── IDW layer state ─────────────────────────────────────────
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [currentAnalysisId, setCurrentAnalysisId] = useState<string | null>(null)
   const [activeLayerIds, setActiveLayerIds] = useState<Set<string>>(new Set())
   const [cachedLayers, setCachedLayers] = useState<Map<string, object>>(new Map())
 
-  // Fetch nearby listings whenever a location is selected
+  // Fetch nearby listings when location changes
   useEffect(() => {
-    if (!selectedLocation) {
-      setListings([])
-      return
-    }
+    if (!selectedLocation) { setListings([]); return }
     const { lat, lng } = selectedLocation
     const controller = new AbortController()
-
     fetch(
       `http://127.0.0.1:8001/api/v1/listings?lat=${lat}&lng=${lng}&radius_km=150&limit=30`,
       { signal: controller.signal },
@@ -68,24 +43,15 @@ export default function App() {
       .then((r) => r.ok ? r.json() : Promise.reject(r.status))
       .then((data) => setListings(data.listings ?? []))
       .catch(() => setListings([]))
-
     return () => controller.abort()
   }, [selectedLocation])
 
-  const handleLocationSelect = useCallback(
-    (lat: number, lng: number) => {
-      setSelectedLocation({ lat, lng })
-      setActiveLayerIds(new Set())
-      setCachedLayers(new Map())
-    },
-    [],
-  )
-
-  const toggleOverlay = useCallback(
-    (key: keyof ActiveOverlays) =>
-      setActiveOverlays((prev) => ({ ...prev, [key]: !prev[key] })),
-    [],
-  )
+  const handleLocationSelect = useCallback((lat: number, lng: number) => {
+    setSelectedLocation({ lat, lng })
+    setActiveLayerIds(new Set())
+    setCachedLayers(new Map())
+    setCurrentAnalysisId(null)
+  }, [])
 
   const handleAnalyze = useCallback(async (location: { lat: number; lng: number }) => {
     setIsAnalyzing(true)
@@ -104,22 +70,50 @@ export default function App() {
         max_acres: 500,
         include_listings: true,
       })
+      setCurrentAnalysisId(result.analysis_id)
+      // Auto-load optimal layer
       const optimal = await fetchLayer(result.analysis_id, 'optimal')
       setCachedLayers(new Map([['optimal', optimal]]))
       setActiveLayerIds(new Set(['optimal']))
     } catch {
-      // analysis failed silently — AnalysisPanel handles its own error display
+      // silent — AnalysisPanel handles its own error display
     } finally {
       setIsAnalyzing(false)
     }
   }, [])
 
-  // Auto-run IDW analysis when a location is selected
-  useEffect(() => {
-    if (selectedLocation) {
-      void handleAnalyze(selectedLocation)
+  // Toggle a layer on/off — fetches from backend if not yet cached
+  const toggleLayer = useCallback(async (id: string) => {
+    setActiveLayerIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+
+    // If we have an analysis and the layer isn't cached yet, fetch it
+    if (currentAnalysisId && !cachedLayers.has(id)) {
+      try {
+        const data = await fetchLayer(currentAnalysisId, id)
+        setCachedLayers(prev => new Map(prev).set(id, data))
+      } catch {
+        // fetch failed — remove from active set
+        setActiveLayerIds(prev => {
+          const next = new Set(prev)
+          next.delete(id)
+          return next
+        })
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAnalysisId, cachedLayers])
+
+  // Auto-run analysis when location is selected
+  useEffect(() => {
+    if (selectedLocation) void handleAnalyze(selectedLocation)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedLocation])
 
   return (
@@ -153,10 +147,7 @@ export default function App() {
 
           {/* ── Floating header bar ───────────────────────────────── */}
           <header className="absolute top-0 left-0 right-0 z-[1000] overflow-hidden">
-            {/* Gradient backdrop */}
             <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-background/85 to-slate-950/95 backdrop-blur-xl border-b border-white/5" />
-
-            {/* Subtle wave accent line at the bottom of the bar */}
             <svg
               className="absolute bottom-0 left-0 w-full h-[3px] opacity-50"
               preserveAspectRatio="none"
@@ -179,8 +170,6 @@ export default function App() {
                 fill="none"
               />
             </svg>
-
-            {/* Header content */}
             <div className="relative flex items-center justify-between px-5 py-3">
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -201,7 +190,6 @@ export default function App() {
                   </p>
                 </div>
               </div>
-
               <div className="flex items-center gap-2">
                 {selectedLocation ? (
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary/60 backdrop-blur border border-border/50">
@@ -270,7 +258,7 @@ export default function App() {
 
           {/* ── Floating layers card — bottom left ───────────────── */}
           <div className="absolute bottom-6 left-4 z-[1000]">
-            <LayersPanel activeOverlays={activeOverlays} onToggle={toggleOverlay} />
+            <LayersPanel activeLayerIds={activeLayerIds} onToggle={toggleLayer} />
           </div>
 
           {/* ── Floating analysis panel — left side ──────────────── */}
