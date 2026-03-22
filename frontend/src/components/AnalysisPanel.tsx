@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { Button } from '@/components/ui/button'
-=======
 import { useState, useEffect } from 'react'
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -16,17 +12,6 @@ import {
   BarChart3,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-<<<<<<< HEAD
-import type { AnalyzeResponse } from '@/lib/api'
-
-// ── Props ──────────────────────────────────────────────────────
-interface AnalysisPanelProps {
-  selectedLocation: { lat: number; lng: number } | null
-  currentAnalysis: AnalyzeResponse | null
-  isAnalyzing: boolean
-  analysisError: string | null
-  onAnalyze: () => void
-=======
 
 // ── API Types ──────────────────────────────────────────────────
 interface AnalyzeResponse {
@@ -46,7 +31,6 @@ interface ScoreBundle {
 
 interface AnalysisPanelProps {
   selectedLocation: { lat: number; lng: number } | null
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 }
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -71,47 +55,6 @@ function qualityVariant(score: number): 'default' | 'secondary' | 'outline' {
   return 'outline'
 }
 
-<<<<<<< HEAD
-// ── Component ──────────────────────────────────────────────────
-export function AnalysisPanel({
-  selectedLocation,
-  currentAnalysis,
-  isAnalyzing,
-  analysisError,
-  onAnalyze,
-}: AnalysisPanelProps) {
-  const topCell = currentAnalysis?.grid_cells?.[0] ?? null
-
-  const compositeScore = pct(topCell?.composite_score?.composite)
-  const powerScore     = topCell?.scores?.['power'] ?? 0
-  const connectScore   = topCell?.scores?.['connectivity'] ?? 0
-  const climateScore   = topCell?.scores?.['climate'] ?? 0
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const powerMetrics      = (topCell?.metrics?.power as any) ?? {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const climateMetrics    = (topCell?.metrics?.climate as any) ?? {}
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const connectMetrics    = (topCell?.metrics?.connectivity as any) ?? {}
-
-  const avgSummerTempC = climateMetrics.avg_summer_temp_c as number | undefined
-  const tempDisplay = avgSummerTempC != null ? `${celsiusToFahrenheit(avgSummerTempC)}°F` : '—'
-
-  const renewablePct = powerMetrics.renewable_energy_pct as number | undefined
-  const carbonDisplay = renewablePct != null
-    ? (renewablePct >= 0.5 ? 'Low' : renewablePct >= 0.25 ? 'Med' : 'High')
-    : '—'
-
-  const reliabilityDisplay = powerMetrics.grid_reliability_index != null
-    ? `${Math.round((powerMetrics.grid_reliability_index as number) * 100)}%`
-    : '—'
-
-  const ixKm = connectMetrics.nearest_ix_point_km as number | undefined
-  const latencyDisplay = ixKm != null ? `${Math.round(ixKm)}km` : '—'
-
-  const showAnalyzeButton = selectedLocation && !isAnalyzing && !currentAnalysis
-
-=======
 // ── EIA commercial electricity rates by state (cents/kWh, 2023) ─
 // Source: U.S. Energy Information Administration, Electric Power Monthly
 const EIA_RATES_CENTS: Record<string, number> = {
@@ -214,7 +157,6 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
   const ixKm = siteData?.metrics?.connectivity?.nearest_ix_point_km
   const latencyDisplay = ixKm != null ? `${Math.round(ixKm)}km` : '—'
 
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
   return (
     <div className="w-72 flex flex-col gap-3 overflow-y-auto max-h-full">
 
@@ -234,26 +176,10 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
             </span>
           </div>
         )}
-<<<<<<< HEAD
-        {showAnalyzeButton && (
-          <Button
-            onClick={onAnalyze}
-            size="sm"
-            className="w-full mt-3 h-8 text-xs"
-          >
-            Analyze Site
-          </Button>
-        )}
-      </div>
-
-      {/* ── Loading ──────────────────────────────────────────── */}
-      {isAnalyzing && (
-=======
       </div>
 
       {/* ── Loading ──────────────────────────────────────────── */}
       {isLoading && (
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         <div className="rounded-2xl bg-background/70 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/30 p-4 flex items-center gap-3">
           <Loader2 className="w-4 h-4 text-primary animate-spin flex-shrink-0" />
           <p className="text-xs text-muted-foreground">Scoring location…</p>
@@ -261,29 +187,17 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
       )}
 
       {/* ── Error ────────────────────────────────────────────── */}
-<<<<<<< HEAD
-      {analysisError && (
-        <div className="rounded-2xl bg-background/70 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-black/30 p-4 flex items-start gap-2">
-          <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            {analysisError}. Check that the backend is running on port 8000.
-=======
       {hasError && (
         <div className="rounded-2xl bg-background/70 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-black/30 p-4 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Could not score this location. Try clicking within the continental US, or check that the backend is running on port 8001.
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
+            Unable to score location. Check that the backend is running on port 8001.
           </p>
         </div>
       )}
 
       {/* ── Score data ───────────────────────────────────────── */}
-<<<<<<< HEAD
-      {!isAnalyzing && topCell && (
-=======
       {!isLoading && siteData && (
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         <>
           {/* Score bars */}
           <div className="rounded-2xl bg-background/70 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/30 p-4 space-y-4">
@@ -321,11 +235,7 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
 
           {/* Quick stats grid */}
           <div className="grid grid-cols-2 gap-2">
-<<<<<<< HEAD
-            <QuickStat icon={<Zap className="w-4 h-4" />}         label="Grid Uptime"  value={reliabilityDisplay} />
-=======
             <QuickStat icon={<Zap className="w-4 h-4" />}         label="Avg kWh"      value={kwhDisplay} />
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
             <QuickStat icon={<Thermometer className="w-4 h-4" />} label="Avg Summer"   value={tempDisplay} />
             <QuickStat icon={<Wifi className="w-4 h-4" />}        label="Nearest IX"   value={latencyDisplay} />
             <QuickStat icon={<Cloud className="w-4 h-4" />}       label="Carbon"       value={carbonDisplay} />
