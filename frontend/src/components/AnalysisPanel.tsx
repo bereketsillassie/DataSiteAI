@@ -55,16 +55,32 @@ function qualityVariant(score: number): 'default' | 'secondary' | 'outline' {
   return 'outline'
 }
 
+// ── EIA commercial electricity rates by state (cents/kWh, 2023) ─
+// Source: U.S. Energy Information Administration, Electric Power Monthly
+const EIA_RATES_CENTS: Record<string, number> = {
+  AL: 11.2, AK: 22.4, AZ: 11.8, AR:  9.5, CA: 26.2, CO: 11.7,
+  CT: 22.8, DE: 12.4, FL: 11.8, GA: 10.6, HI: 41.0, ID:  8.2,
+  IL: 10.1, IN:  9.6, IA:  9.1, KS: 10.2, KY:  8.5, LA:  9.2,
+  ME: 18.8, MD: 13.1, MA: 24.3, MI: 12.0, MN: 11.0, MS: 10.3,
+  MO:  9.2, MT:  9.8, NE:  9.4, NV: 11.6, NH: 22.6, NJ: 15.8,
+  NM: 11.0, NY: 17.2, NC:  9.8, ND:  9.2, OH: 10.9, OK:  9.7,
+  OR: 10.3, PA: 11.8, RI: 23.4, SC: 10.0, SD: 10.4, TN:  9.5,
+  TX:  9.8, UT:  8.8, VT: 18.2, VA:  9.1, WA:  8.9, WV:  9.6,
+  WI: 12.3, WY:  8.7, DC: 14.2,
+}
+
 // ── Component ──────────────────────────────────────────────────
 export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
   const [siteData, setSiteData] = useState<ScoreBundle | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [hasError, setHasError] = useState(false)
+  const [stateCode, setStateCode] = useState<string>('')
 
   useEffect(() => {
     if (!selectedLocation) {
       setSiteData(null)
       setHasError(false)
+      setStateCode('')
       return
     }
 
@@ -75,6 +91,7 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
       setIsLoading(true)
       setHasError(false)
       setSiteData(null)
+      setStateCode('')
 
       try {
         // Reverse-geocode to get US state code
@@ -84,12 +101,14 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
         )
         const geoData: { address?: { 'ISO3166-2-lvl4'?: string } } = await geoRes.json()
         const iso = geoData?.address?.['ISO3166-2-lvl4'] ?? ''
-        const stateCode = iso.startsWith('US-') ? iso.slice(3) : ''
+        const code = iso.startsWith('US-') ? iso.slice(3) : ''
 
-        if (!stateCode) {
+        if (!code) {
           setHasError(true)
           return
         }
+
+        setStateCode(code)
 
         const res = await fetch('http://127.0.0.1:8001/api/v1/analyze', {
           method: 'POST',
@@ -101,7 +120,7 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
               max_lat: lat + delta,
               max_lng: lng + delta,
             },
-            state: stateCode,
+            state: code,
             grid_resolution_km: 5.0,
             include_listings: false,
           }),
@@ -130,8 +149,10 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
   const carbonDisplay = renewablePct != null
     ? (renewablePct >= 0.5 ? 'Low' : renewablePct >= 0.25 ? 'Med' : 'High')
     : '—'
-  const reliabilityDisplay = siteData?.metrics?.power?.grid_reliability_index != null
-    ? `${Math.round((siteData.metrics.power.grid_reliability_index ?? 0) * 100)}%`
+  // Use real EIA state rate — backend mock always returns the same value
+  const eiaRateCents = stateCode ? EIA_RATES_CENTS[stateCode] : undefined
+  const kwhDisplay = eiaRateCents != null
+    ? `$${(eiaRateCents / 100).toFixed(3)}/kWh`
     : '—'
   const ixKm = siteData?.metrics?.connectivity?.nearest_ix_point_km
   const latencyDisplay = ixKm != null ? `${Math.round(ixKm)}km` : '—'
@@ -214,7 +235,7 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
 
           {/* Quick stats grid */}
           <div className="grid grid-cols-2 gap-2">
-            <QuickStat icon={<Zap className="w-4 h-4" />}         label="Grid Uptime"  value={reliabilityDisplay} />
+            <QuickStat icon={<Zap className="w-4 h-4" />}         label="Avg kWh"      value={kwhDisplay} />
             <QuickStat icon={<Thermometer className="w-4 h-4" />} label="Avg Summer"   value={tempDisplay} />
             <QuickStat icon={<Wifi className="w-4 h-4" />}        label="Nearest IX"   value={latencyDisplay} />
             <QuickStat icon={<Cloud className="w-4 h-4" />}       label="Carbon"       value={carbonDisplay} />

@@ -1,5 +1,6 @@
-import { MapContainer, TileLayer, Marker, Circle, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Circle, Popup, useMapEvents } from "react-leaflet";
 import L from 'leaflet';
+import type { Listing } from '@/App'
 
 // ── Fix default marker icon (required for Vite + Leaflet) ─────
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -40,6 +41,27 @@ const glowMarker = L.divIcon({
   iconSize: [20, 20],
   iconAnchor: [10, 10],
 });
+
+// ── Listing marker — green pin with dollar sign ───────────────
+function makeListingIcon(composite: number) {
+  // Color: green for high score, amber for mid, red for low
+  const color = composite >= 0.7 ? '#10b981' : composite >= 0.5 ? '#f59e0b' : '#ef4444'
+  const border = composite >= 0.7 ? '#064e3b' : composite >= 0.5 ? '#451a03' : '#450a0a'
+  return L.divIcon({
+    className: '',
+    html: `
+      <div style="
+        width:14px;height:14px;border-radius:50%;
+        background:${color};
+        border:2px solid ${border};
+        box-shadow:0 0 6px ${color}99;
+      "></div>
+    `,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    popupAnchor: [0, -10],
+  })
+}
 
 // ── Risk overlay zones (approximate US geographic data) ────────
 interface Zone { center: [number, number]; radius: number }
@@ -96,6 +118,7 @@ interface MapViewProps {
   selectedLocation: { lat: number; lng: number } | null;
   onLocationSelect: (lat: number, lng: number) => void;
   activeOverlays: ActiveOverlays;
+  listings: Listing[];
 }
 
 // ── MapClickHandler — PRESERVED EXACTLY ──────────────────────
@@ -108,8 +131,20 @@ function MapClickHandler({ onLocationSelect }: { onLocationSelect: (lat: number,
   return null;
 }
 
+// ── Helpers ───────────────────────────────────────────────────
+function formatPrice(usd: number | null): string {
+  if (!usd) return 'Price N/A'
+  if (usd >= 1_000_000) return `$${(usd / 1_000_000).toFixed(1)}M`
+  if (usd >= 1_000) return `$${Math.round(usd / 1_000)}K`
+  return `$${usd}`
+}
+
+function scorePct(val: number | undefined): string {
+  return val != null ? `${Math.round(val * 100)}%` : '—'
+}
+
 // ── MapView ───────────────────────────────────────────────────
-export default function MapView({ selectedLocation, onLocationSelect, activeOverlays }: MapViewProps) {
+export default function MapView({ selectedLocation, onLocationSelect, activeOverlays, listings }: MapViewProps) {
   const center: [number, number] = [39.8283, -98.5795];
 
   const usBounds: [[number, number], [number, number]] = [
@@ -173,6 +208,63 @@ export default function MapView({ selectedLocation, onLocationSelect, activeOver
           }}
         />
       )}
+
+      {/* Land listing markers */}
+      {listings.map((listing) => {
+        const { lat, lng } = listing.coordinates
+        if (!lat || !lng) return null
+        const composite = listing.nearest_cell_scores?.composite ?? 0.5
+        return (
+          <Marker
+            key={listing.id}
+            position={[lat, lng]}
+            icon={makeListingIcon(composite)}
+          >
+            <Popup
+              className="listing-popup"
+              maxWidth={220}
+            >
+              <div style={{ fontFamily: 'monospace', fontSize: '11px', lineHeight: '1.5', color: '#e2e8f0' }}>
+                <div style={{ fontWeight: 700, fontSize: '12px', marginBottom: '4px', color: '#38bdf8' }}>
+                  {listing.address ?? `${listing.county ?? listing.state} Parcel`}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2px 8px', marginBottom: '4px' }}>
+                  <span style={{ color: '#94a3b8' }}>Acres</span>
+                  <span style={{ fontWeight: 600 }}>{listing.acres?.toFixed(1)}</span>
+                  <span style={{ color: '#94a3b8' }}>Price</span>
+                  <span style={{ fontWeight: 600, color: '#4ade80' }}>{formatPrice(listing.price_usd)}</span>
+                  {listing.price_per_acre && (
+                    <>
+                      <span style={{ color: '#94a3b8' }}>/acre</span>
+                      <span>${Math.round(listing.price_per_acre).toLocaleString()}</span>
+                    </>
+                  )}
+                </div>
+                <div style={{ borderTop: '1px solid #334155', paddingTop: '4px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px 8px' }}>
+                  <span style={{ color: '#94a3b8' }}>Score</span>
+                  <span style={{ color: composite >= 0.7 ? '#10b981' : composite >= 0.5 ? '#f59e0b' : '#ef4444', fontWeight: 700 }}>
+                    {scorePct(composite)}
+                  </span>
+                  <span style={{ color: '#94a3b8' }}>Power</span>
+                  <span>{scorePct(listing.nearest_cell_scores?.power)}</span>
+                  <span style={{ color: '#94a3b8' }}>Climate</span>
+                  <span>{scorePct(listing.nearest_cell_scores?.climate)}</span>
+                </div>
+                {listing.listing_url && (
+                  <a
+                    href={listing.listing_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'block', marginTop: '6px', color: '#818cf8', textDecoration: 'underline', fontSize: '10px' }}
+                  >
+                    View listing →
+                  </a>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        )
+      })}
 
       {/* Glowing selected-site marker */}
       {selectedLocation && (
