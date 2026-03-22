@@ -42,13 +42,8 @@ NLCD_CLASS_NAMES = {
 class GEEClient(BaseIntegrationClient):
     """Google Earth Engine client for raster data retrieval."""
 
-<<<<<<< HEAD
     def __init__(self, db_session=None, settings=None):
         super().__init__(db_session, settings)
-=======
-    def __init__(self, redis_client=None, settings=None):
-        super().__init__(redis_client, settings)
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         self.source_name = "gee"
         self._initialized = False
 

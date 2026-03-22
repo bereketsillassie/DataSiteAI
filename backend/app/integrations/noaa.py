@@ -68,13 +68,8 @@ MOCK_STORM_EVENTS = {
 class NOAAClient(BaseIntegrationClient):
     """NOAA Climate Data Online API client."""
 
-<<<<<<< HEAD
     def __init__(self, db_session=None, settings=None):
         super().__init__(db_session, settings)
-=======
-    def __init__(self, redis_client=None, settings=None):
-        super().__init__(redis_client, settings)
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         self.source_name = "noaa"
 
     def _api_headers(self) -> dict:

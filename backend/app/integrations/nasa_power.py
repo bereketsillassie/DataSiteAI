@@ -28,13 +28,8 @@ NASA_POWER_URL = "https://power.larc.nasa.gov/api/temporal/climatology/point"
 class NASAPowerClient(BaseIntegrationClient):
     """NASA POWER climate API client."""
 
-<<<<<<< HEAD
     def __init__(self, db_session=None, settings=None):
         super().__init__(db_session, settings)
-=======
-    def __init__(self, redis_client=None, settings=None):
-        super().__init__(redis_client, settings)
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         self.source_name = "nasa_power"
 
     # ── Region-level batch (one call per analysis region) ─────────────────────

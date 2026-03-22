@@ -33,13 +33,8 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 class OSMClient(BaseIntegrationClient):
     """OpenStreetMap Overpass API client."""
 
-<<<<<<< HEAD
     def __init__(self, db_session=None, settings=None):
         super().__init__(db_session, settings)
-=======
-    def __init__(self, redis_client=None, settings=None):
-        super().__init__(redis_client, settings)
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         self.source_name = "osm"
 
     # ── Region-level batch fetch (call this ONCE per analysis region) ──────────
@@ -92,12 +87,9 @@ class OSMClient(BaseIntegrationClient):
           way["highway"~"^(motorway|trunk|primary|motorway_link|trunk_link)$"]({bb});
           node["amenity"~"^(school|hospital|university|college)$"]({bb});
           way["amenity"~"^(school|hospital|university|college)$"]({bb});
-<<<<<<< HEAD
           way["natural"="water"]({bb});
           way["waterway"~"^(river|stream|canal|drain)$"]({bb});
           relation["natural"="water"]({bb});
-=======
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         );
         out center geom;
         """
@@ -105,11 +97,7 @@ class OSMClient(BaseIntegrationClient):
         elements = data.get("elements", [])
 
         # Split elements into feature-type buckets
-<<<<<<< HEAD
         power_lines, substations, fiber_routes, highways, amenities, waterways = [], [], [], [], [], []
-=======
-        power_lines, substations, fiber_routes, highways, amenities = [], [], [], [], []
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
         for el in elements:
             tags = el.get("tags", {})
@@ -117,7 +105,6 @@ class OSMClient(BaseIntegrationClient):
             if feature is None:
                 continue
 
-<<<<<<< HEAD
             power_val   = tags.get("power", "")
             telecom_val = tags.get("telecom", "")
             fiber_val   = tags.get("communication:fibre_optic", "")
@@ -127,15 +114,6 @@ class OSMClient(BaseIntegrationClient):
             waterway_val= tags.get("waterway", "")
 
             if power_val in ("line", "minor_line"):
-=======
-            power_val = tags.get("power", "")
-            telecom_val = tags.get("telecom", "")
-            fiber_val = tags.get("communication:fibre_optic", "")
-            highway_val = tags.get("highway", "")
-            amenity_val = tags.get("amenity", "")
-
-            if power_val == "line" or power_val == "minor_line":
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
                 power_lines.append(feature)
             elif power_val == "substation":
                 substations.append(feature)
@@ -145,11 +123,8 @@ class OSMClient(BaseIntegrationClient):
                 highways.append(feature)
             elif amenity_val in ("school", "hospital", "university", "college"):
                 amenities.append(feature)
-<<<<<<< HEAD
             elif natural_val == "water" or waterway_val in ("river", "stream", "canal", "drain"):
                 waterways.append(feature)
-=======
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
         result = {
             "power_lines":  power_lines,
@@ -157,10 +132,7 @@ class OSMClient(BaseIntegrationClient):
             "fiber_routes": fiber_routes,
             "highways":     highways,
             "amenities":    amenities,
-<<<<<<< HEAD
             "waterways":    waterways,
-=======
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         }
 
         # Populate individual sub-caches so per-method calls hit cache
@@ -170,12 +142,8 @@ class OSMClient(BaseIntegrationClient):
         logger.info(
             f"OSM region batch: {len(power_lines)} power lines, "
             f"{len(substations)} substations, {len(fiber_routes)} fiber, "
-<<<<<<< HEAD
             f"{len(highways)} highways, {len(amenities)} amenities, "
             f"{len(waterways)} waterways"
-=======
-            f"{len(highways)} highways, {len(amenities)} amenities"
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         )
         return result
 
@@ -194,7 +162,6 @@ class OSMClient(BaseIntegrationClient):
     # ── Internal helpers ───────────────────────────────────────────────────────
 
     async def _overpass_query(self, query: str) -> dict:
-<<<<<<< HEAD
         """
         Execute an Overpass QL query. Enforces 1 req/sec rate limit.
         On 504 Gateway Timeout, waits 5s and retries once before raising.
@@ -227,17 +194,6 @@ class OSMClient(BaseIntegrationClient):
                 raise IntegrationError(source="osm", message=f"Overpass query failed: {e}")
 
         raise IntegrationError(source="osm", message="Overpass query failed after retry")
-=======
-        """Execute an Overpass QL query. Enforces 1 req/sec rate limit."""
-        await asyncio.sleep(1.0)
-        client = await self._get_http_client()
-        try:
-            response = await client.post(OVERPASS_URL, data={"data": query})
-            response.raise_for_status()
-            return response.json()
-        except Exception as e:
-            raise IntegrationError(source="osm", message=f"Overpass query failed: {e}")
->>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
     def _element_to_feature(self, el: dict) -> Optional[dict]:
         """Convert a single Overpass element to a GeoJSON Feature. Returns None if unusable."""
