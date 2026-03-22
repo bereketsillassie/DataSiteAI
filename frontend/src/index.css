@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+<<<<<<< HEAD
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -24,10 +25,34 @@
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
   --chart-1: oklch(0.646 0.222 41.116);
+=======
+  /* Default to dark theme values (HTML has class="dark") */
+  --background: oklch(0.13 0.01 260);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.16 0.01 260);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.16 0.01 260);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.65 0.22 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.22 0.01 260);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.22 0.01 260);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.65 0.22 250);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0.01 260);
+  --input: oklch(0.22 0.01 260);
+  --ring: oklch(0.65 0.22 250);
+  --chart-1: oklch(0.65 0.22 250);
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+<<<<<<< HEAD
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
@@ -77,6 +102,56 @@
 
 @theme inline {
   --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+=======
+  --radius: 0.75rem;
+  --sidebar: oklch(0.14 0.01 260);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.65 0.22 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.22 0.01 260);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.28 0.01 260);
+  --sidebar-ring: oklch(0.65 0.22 250);
+}
+
+.dark {
+  --background: oklch(0.13 0.01 260);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.16 0.01 260);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.16 0.01 260);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.65 0.22 250);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.22 0.01 260);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.22 0.01 260);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.65 0.22 250);
+  --accent-foreground: oklch(0.98 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0.01 260);
+  --input: oklch(0.22 0.01 260);
+  --ring: oklch(0.65 0.22 250);
+  --chart-1: oklch(0.65 0.22 250);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.14 0.01 260);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.65 0.22 250);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.22 0.01 260);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.28 0.01 260);
+  --sidebar-ring: oklch(0.65 0.22 250);
+}
+
+@theme inline {
+  --font-sans: 'DM Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
   --font-mono: ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -142,12 +217,17 @@
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
+<<<<<<< HEAD
   background: oklch(0.25 0.03 252);
+=======
+  background: oklch(0.30 0.02 260);
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
   border-radius: 99px;
 }
 
 /* Leaflet zoom control — restyle for dark */
 .leaflet-control-zoom a {
+<<<<<<< HEAD
   background-color: oklch(0.13 0.025 252) !important;
   color: oklch(0.93 0.015 240) !important;
   border-color: oklch(0.21 0.03 252) !important;
@@ -166,3 +246,54 @@
 .leaflet-overlay-pane {
   filter: blur(1.5px) contrast(1.1);
 }
+=======
+  background-color: oklch(0.16 0.01 260) !important;
+  color: oklch(0.95 0 0) !important;
+  border-color: oklch(0.28 0.01 260) !important;
+}
+.leaflet-control-zoom a:hover {
+  background-color: oklch(0.22 0.01 260) !important;
+}
+.leaflet-control-attribution {
+  background: oklch(0.13 0.01 260 / 0.8) !important;
+  color: oklch(0.50 0.02 260) !important;
+  font-size: 10px !important;
+}
+.leaflet-control-attribution a { color: oklch(0.65 0.22 250) !important; }
+
+/* Dark popup for listing markers */
+.leaflet-popup-content-wrapper {
+  background: oklch(0.16 0.01 260) !important;
+  color: oklch(0.95 0 0) !important;
+  border: 1px solid oklch(0.28 0.01 260) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5) !important;
+  padding: 0 !important;
+}
+.leaflet-popup-content {
+  margin: 10px 12px !important;
+}
+.leaflet-popup-tip {
+  background: oklch(0.16 0.01 260) !important;
+}
+.leaflet-popup-close-button {
+  color: oklch(0.65 0 0) !important;
+  font-size: 16px !important;
+  top: 4px !important;
+  right: 6px !important;
+}
+.leaflet-popup-close-button:hover {
+  color: oklch(0.95 0 0) !important;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e

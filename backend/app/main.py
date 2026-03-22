@@ -43,8 +43,15 @@ async def lifespan(app: FastAPI):
 
     # Import here to avoid circular imports
     from app.db.session import init_db, close_db
+<<<<<<< HEAD
 
     await init_db()
+=======
+    from app.dependencies import init_redis, close_redis
+
+    await init_db()
+    await init_redis()
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
     logger.info("All connections initialized. Ready to serve requests.")
     yield
@@ -52,6 +59,10 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down...")
     await close_db()
+<<<<<<< HEAD
+=======
+    await close_redis()
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
     logger.info("Shutdown complete.")
 
 

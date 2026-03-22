@@ -2,6 +2,7 @@
 app/integrations/base.py
 ─────────────────────────
 Base class for all integration clients.
+<<<<<<< HEAD
 
 CACHING: Uses PostgreSQL (Supabase) via its OWN independent session.
   The db_session parameter accepted here is stored but NOT used for cache
@@ -11,12 +12,26 @@ CACHING: Uses PostgreSQL (Supabase) via its OWN independent session.
 
   In-memory dict (_memory_cache) serves as a fast same-process layer so
   cache warming still works even if DB is temporarily unreachable.
+=======
+Every external data source client extends this class.
+
+Key features:
+  - Redis caching (check before fetch, set after fetch)
+  - HTTP retry with exponential backoff via tenacity
+  - Mock mode: return fixture data when settings.MOCK_INTEGRATIONS=True
+  - Typed error handling: always raise IntegrationError, never raw exceptions
+  - follow_redirects=True set globally on the shared HTTP client —
+    do NOT pass it as a kwarg to _fetch_with_retry()
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 """
 
 import json
 import logging
+<<<<<<< HEAD
 import hashlib
 from datetime import datetime, timezone, timedelta
+=======
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 from typing import Any, Optional
 
 import httpx
@@ -31,14 +46,18 @@ from app.models.domain import IntegrationError
 
 logger = logging.getLogger(__name__)
 
+<<<<<<< HEAD
 # In-memory fallback cache — (data, expires_at) per key
 _memory_cache: dict[str, tuple[Any, datetime]] = {}
 
+=======
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
 class BaseIntegrationClient:
     """
     Base class for all external data source integrations.
 
+<<<<<<< HEAD
     IMPORTANT: Cache operations use their own DB session (not self.db).
     This prevents concurrent operation errors when multiple scorers run
     in parallel and all try to write to the cache simultaneously.
@@ -47,31 +66,69 @@ class BaseIntegrationClient:
     def __init__(self, db_session=None, settings=None):
         from app.config import settings as default_settings
         self.db = db_session          # kept for reference, NOT used for cache
+=======
+    Subclasses must:
+      1. Set self.source_name (e.g. "eia", "fema") for logging/cache keys
+      2. Implement their data-fetching methods
+      3. Check self.mock first in each method and return fixture data if True
+
+    IMPORTANT: The shared HTTP client has follow_redirects=True globally.
+    Never pass follow_redirects as a kwarg to _fetch_with_retry() — it is
+    not a supported parameter and will raise a TypeError.
+    """
+
+    def __init__(self, redis_client=None, settings=None):
+        from app.config import settings as default_settings
+
+        self.redis = redis_client
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         self.settings = settings or default_settings
         self.mock = self.settings.MOCK_INTEGRATIONS
         self.source_name = "base"
         self._http_client: Optional[httpx.AsyncClient] = None
 
     async def _get_http_client(self) -> httpx.AsyncClient:
+<<<<<<< HEAD
+=======
+        """Lazily create and return a shared async HTTP client."""
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         if self._http_client is None or self._http_client.is_closed:
             self._http_client = httpx.AsyncClient(
                 timeout=httpx.Timeout(30.0, connect=10.0),
                 headers={"User-Agent": "DataCenter-Site-Selector/1.0 (contact@example.com)"},
+<<<<<<< HEAD
                 follow_redirects=True,
+=======
+                follow_redirects=True,  # Handles all redirects globally — do not pass per-call
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
             )
         return self._http_client
 
     async def close(self):
+<<<<<<< HEAD
         if self._http_client and not self._http_client.is_closed:
             await self._http_client.aclose()
 
     # ── Cache key ──────────────────────────────────────────────────────────────
 
     def _cache_key(self, operation: str, *args) -> str:
+=======
+        """Close the HTTP client. Call on app shutdown."""
+        if self._http_client and not self._http_client.is_closed:
+            await self._http_client.aclose()
+
+    # ── Caching ────────────────────────────────────────────────────────────────
+
+    def _cache_key(self, operation: str, *args) -> str:
+        """Build a Redis cache key. Format: integration:{source}:{operation}:{hash}"""
+        import hashlib
+
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         args_str = ":".join(str(a) for a in args)
         args_hash = hashlib.md5(args_str.encode()).hexdigest()[:12]
         return f"integration:{self.source_name}:{operation}:{args_hash}"
 
+<<<<<<< HEAD
     # ── Cache read ─────────────────────────────────────────────────────────────
 
     async def _get_cached(self, key: str) -> Optional[Any]:
@@ -149,6 +206,37 @@ class BaseIntegrationClient:
             logger.debug(f"Cached {key} for {ttl_hours}h")
         except Exception as e:
             logger.debug(f"DB cache set failed for {key}: {e}")
+=======
+    async def _get_cached(self, key: str) -> Optional[Any]:
+        """
+        Check Redis for a cached value. Returns deserialized value or None.
+        Never raises — if Redis is down, returns None and fetches live.
+        """
+        if self.redis is None:
+            return None
+        try:
+            raw = await self.redis.get(key)
+            if raw:
+                logger.debug(f"Cache HIT: {key}")
+                return json.loads(raw)
+            logger.debug(f"Cache MISS: {key}")
+            return None
+        except Exception as e:
+            logger.warning(f"Redis get failed for key {key}: {e}")
+            return None
+
+    async def _set_cached(self, key: str, data: Any, ttl_hours: int = 24) -> None:
+        """
+        Store a value in Redis with TTL. Never raises — cache failures are silent.
+        """
+        if self.redis is None:
+            return
+        try:
+            await self.redis.setex(key, ttl_hours * 3600, json.dumps(data))
+            logger.debug(f"Cached {key} for {ttl_hours}h")
+        except Exception as e:
+            logger.warning(f"Redis set failed for key {key}: {e}")
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
     # ── HTTP with retry ────────────────────────────────────────────────────────
 
@@ -161,30 +249,47 @@ class BaseIntegrationClient:
     async def _fetch_with_retry(
         self,
         url: str,
+<<<<<<< HEAD
         params=None,
+=======
+        params: Optional[dict] = None,
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         headers: Optional[dict] = None,
         method: str = "GET",
         json_body: Optional[dict] = None,
     ) -> dict:
         """
         Fetch a URL with automatic retry on transport errors.
+<<<<<<< HEAD
         Raises IntegrationError on HTTP errors or after all retries fail.
         Treats 504 as retriable.
+=======
+        Returns the parsed JSON response body.
+        Raises IntegrationError on HTTP errors or after all retries fail.
+
+        NOTE: follow_redirects is handled globally on the HTTP client.
+        Do NOT add it as a parameter here.
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         """
         client = await self._get_http_client()
         try:
             if method == "GET":
                 response = await client.get(url, params=params, headers=headers)
             elif method == "POST":
+<<<<<<< HEAD
                 response = await client.post(
                     url, params=params, headers=headers, json=json_body
                 )
+=======
+                response = await client.post(url, params=params, headers=headers, json=json_body)
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
             else:
                 raise ValueError(f"Unsupported HTTP method: {method}")
 
             if response.status_code == 429:
                 raise IntegrationError(
                     source=self.source_name,
+<<<<<<< HEAD
                     message=f"Rate limited by {url}.",
                     status_code=429,
                 )
@@ -194,6 +299,11 @@ class BaseIntegrationClient:
                     message=f"Gateway timeout from {url}.",
                     status_code=504,
                 )
+=======
+                    message=f"Rate limited by {url}. Try again later.",
+                    status_code=429,
+                )
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
             if response.status_code >= 400:
                 raise IntegrationError(
                     source=self.source_name,
@@ -206,14 +316,23 @@ class BaseIntegrationClient:
             raise
         except httpx.TransportError as e:
             logger.warning(f"Transport error fetching {url}: {e}. Retrying...")
+<<<<<<< HEAD
             raise
+=======
+            raise  # tenacity will retry
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         except Exception as e:
             raise IntegrationError(
                 source=self.source_name,
                 message=f"Unexpected error fetching {url}: {e}",
             )
 
+<<<<<<< HEAD
     async def _fetch_geojson(self, url: str, params=None) -> dict:
+=======
+    async def _fetch_geojson(self, url: str, params: Optional[dict] = None) -> dict:
+        """Fetch GeoJSON from a URL. Same retry/error handling as _fetch_with_retry."""
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         client = await self._get_http_client()
         try:
             response = await client.get(url, params=params)

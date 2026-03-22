@@ -87,10 +87,17 @@ class ListingService:
                         ST_MakePoint(:lng, :lat)::geography,
                         :radius_m
                     )
+<<<<<<< HEAD
                     AND (cast(:min_acres as numeric) IS NULL OR acres >= cast(:min_acres as numeric))
                     AND (cast(:max_acres as numeric) IS NULL OR acres <= cast(:max_acres as numeric))
                     AND (cast(:max_price as bigint) IS NULL OR price_usd <= cast(:max_price as bigint))
                     AND (cast(:state as text) IS NULL OR state = cast(:state as text))
+=======
+                    AND (:min_acres IS NULL OR acres >= :min_acres)
+                    AND (:max_acres IS NULL OR acres <= :max_acres)
+                    AND (:max_price IS NULL OR price_usd <= :max_price)
+                    AND (:state IS NULL OR state = :state)
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
                 ORDER BY distance_km ASC
                 LIMIT :limit
             """)

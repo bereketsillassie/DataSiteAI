@@ -3,7 +3,75 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Sparkles, X, Send, Bot, User, Loader2, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
+<<<<<<< HEAD
 import { sendChatMessage } from '@/lib/api'
+=======
+
+// ── Markdown renderer ─────────────────────────────────────────
+function renderInline(text: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g)
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>
+    }
+    if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+      return <em key={i}>{part.slice(1, -1)}</em>
+    }
+    return <span key={i}>{part}</span>
+  })
+}
+
+function renderMarkdown(text: string): React.ReactNode {
+  const lines = text.split('\n')
+  const nodes: React.ReactNode[] = []
+  let i = 0
+
+  while (i < lines.length) {
+    const line = lines[i]
+
+    if (line.trim() === '') {
+      nodes.push(<div key={i} className="h-1" />)
+    } else if (line.startsWith('### ')) {
+      nodes.push(
+        <p key={i} className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mt-2 mb-0.5">
+          {renderInline(line.slice(4))}
+        </p>
+      )
+    } else if (line.startsWith('## ')) {
+      nodes.push(
+        <p key={i} className="text-xs font-bold text-foreground mt-2 mb-0.5">
+          {renderInline(line.slice(3))}
+        </p>
+      )
+    } else if (/^[-•]\s/.test(line)) {
+      nodes.push(
+        <div key={i} className="flex gap-1.5 items-start">
+          <span className="text-primary/70 mt-0.5 flex-shrink-0">•</span>
+          <span className="leading-relaxed">{renderInline(line.replace(/^[-•]\s/, ''))}</span>
+        </div>
+      )
+    } else if (/^\d+\.\s/.test(line)) {
+      const match = line.match(/^(\d+)\.\s(.*)$/)
+      if (match) {
+        nodes.push(
+          <div key={i} className="flex gap-1.5 items-start">
+            <span className="text-primary/70 font-mono text-[10px] mt-0.5 flex-shrink-0 w-3">{match[1]}.</span>
+            <span className="leading-relaxed">{renderInline(match[2])}</span>
+          </div>
+        )
+      }
+    } else {
+      nodes.push(
+        <p key={i} className="leading-relaxed">{renderInline(line)}</p>
+      )
+    }
+
+    i++
+  }
+
+  return <div className="space-y-0.5 text-sm">{nodes}</div>
+}
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
 
 // ── Types ─────────────────────────────────────────────────────
 interface Message {
@@ -51,12 +119,30 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
       // History sent WITHOUT the message we just added (match backend expectation)
       const history = messages.map(({ role, content }) => ({ role, content }))
 
+<<<<<<< HEAD
       const data = await sendChatMessage({
         message: text,
         history,
         location_context: locationContext,
       })
 
+=======
+      const payload = {
+        message: text,
+        history,
+        location_context: locationContext, // { lat, lng } | null
+      }
+
+      const res = await fetch('http://127.0.0.1:8001/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data: { reply: string } = await res.json()
+
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
       setMessages((prev) => [
         ...prev,
         { id: nextId + 1, role: 'assistant', content: data.reply },
@@ -67,7 +153,11 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
         {
           id: nextId + 1,
           role: 'assistant',
+<<<<<<< HEAD
           content: '⚠️ Could not connect to the backend AI. Make sure the FastAPI server is running on port 8000.',
+=======
+          content: '⚠️ Could not connect to the backend AI. Make sure the FastAPI server is running on port 8001.',
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
         },
       ])
     } finally {
@@ -161,6 +251,7 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
               )}
               <div
                 className={cn(
+<<<<<<< HEAD
                   'max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
                   message.role === 'user'
                     ? 'bg-primary text-primary-foreground rounded-br-sm'
@@ -168,6 +259,17 @@ export function ChatWidget({ locationContext }: ChatWidgetProps) {
                 )}
               >
                 {message.content}
+=======
+                  'max-w-[80%] rounded-2xl px-4 py-2.5',
+                  message.role === 'user'
+                    ? 'bg-primary text-primary-foreground rounded-br-sm text-sm leading-relaxed'
+                    : 'bg-secondary/80 backdrop-blur text-foreground border border-border rounded-bl-sm',
+                )}
+              >
+                {message.role === 'assistant'
+                  ? renderMarkdown(message.content)
+                  : message.content}
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
               </div>
               {message.role === 'user' && (
                 <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">

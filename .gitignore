@@ -73,3 +73,7 @@ jest-cache/
 # =========================
 *.pem
 *.key
+.env
+backend/venv/
+__pycache__/
+*.pyc

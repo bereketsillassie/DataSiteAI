@@ -1,5 +1,6 @@
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+<<<<<<< HEAD
 import { Zap, Droplets, Mountain, Thermometer, Wifi, BarChart3, Leaf, Layers } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { LAYER_CATEGORIES } from '@/lib/api'
@@ -22,6 +23,24 @@ interface LayersPanelProps {
 }
 
 export function LayersPanel({ activeLayerIds, onToggle, hasAnalysis }: LayersPanelProps) {
+=======
+import { Cloud, Flame, Droplets, Mountain, Layers } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+interface ActiveOverlays {
+  carbonEmissions: boolean
+  wildfireRisk: boolean
+  floodZone: boolean
+  seismicHazard: boolean
+}
+
+interface LayersPanelProps {
+  activeOverlays: ActiveOverlays
+  onToggle: (key: keyof ActiveOverlays) => void
+}
+
+export function LayersPanel({ activeOverlays, onToggle }: LayersPanelProps) {
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
   return (
     <div className="w-56 rounded-2xl bg-background/70 backdrop-blur-xl border border-border/50 shadow-2xl shadow-black/30 overflow-hidden">
       {/* Header */}
@@ -34,6 +53,7 @@ export function LayersPanel({ activeLayerIds, onToggle, hasAnalysis }: LayersPan
 
       {/* Toggle rows */}
       <div className="p-3 space-y-1">
+<<<<<<< HEAD
         {LAYER_CATEGORIES.map((cat) => (
           <OverlayToggle
             key={cat.id}
@@ -44,6 +64,36 @@ export function LayersPanel({ activeLayerIds, onToggle, hasAnalysis }: LayersPan
             onCheckedChange={() => hasAnalysis && onToggle(cat.id)}
           />
         ))}
+=======
+        <OverlayToggle
+          icon={<Cloud className="w-3.5 h-3.5" />}
+          label="Carbon Emissions"
+          color="text-orange-400"
+          checked={activeOverlays.carbonEmissions}
+          onCheckedChange={() => onToggle('carbonEmissions')}
+        />
+        <OverlayToggle
+          icon={<Flame className="w-3.5 h-3.5" />}
+          label="Wildfire Risk"
+          color="text-red-400"
+          checked={activeOverlays.wildfireRisk}
+          onCheckedChange={() => onToggle('wildfireRisk')}
+        />
+        <OverlayToggle
+          icon={<Droplets className="w-3.5 h-3.5" />}
+          label="Flood Zone"
+          color="text-blue-400"
+          checked={activeOverlays.floodZone}
+          onCheckedChange={() => onToggle('floodZone')}
+        />
+        <OverlayToggle
+          icon={<Mountain className="w-3.5 h-3.5" />}
+          label="Seismic Hazard"
+          color="text-purple-400"
+          checked={activeOverlays.seismicHazard}
+          onCheckedChange={() => onToggle('seismicHazard')}
+        />
+>>>>>>> df3f91299d88c237f6a06dfe3d32900ee0c7af6e
       </div>
     </div>
   )
