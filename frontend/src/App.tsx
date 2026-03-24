@@ -68,7 +68,7 @@ export default function App() {
         grid_resolution_km: 5,
         min_acres: 20,
         max_acres: 500,
-        include_listings: true,
+        include_listings: false,
       })
       setCurrentAnalysisId(result.analysis_id)
       // Auto-load optimal layer

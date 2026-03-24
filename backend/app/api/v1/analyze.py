@@ -14,6 +14,7 @@ Flow:
 
 import json
 import logging
+import asyncio
 import time
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -188,7 +189,26 @@ async def _persist_analysis(
         },
     )
 
+    params = []
     for cell in grid_cells:
+        params.append({
+            "region_id":       analysis_id,
+            "lat":             cell.location.lat,
+            "lng":             cell.location.lng,
+            "cell_polygon":    json.dumps(cell.location.cell_polygon),
+            "composite":       cell.composite_score.composite,
+            "power":           cell.scores.get("power"),
+            "water":           cell.scores.get("water"),
+            "geological":      cell.scores.get("geological"),
+            "climate":         cell.scores.get("climate"),
+            "connectivity":    cell.scores.get("connectivity"),
+            "economic":        cell.scores.get("economic"),
+            "environmental":   cell.scores.get("environmental"),
+            "metrics":         json.dumps(cell.metrics.model_dump()),
+            "composite_detail":json.dumps(cell.composite_score.model_dump()),
+        })
+
+    if params:
         await db.execute(
             text("""
                 INSERT INTO location_scores (
@@ -207,22 +227,7 @@ async def _persist_analysis(
                     cast(:metrics as jsonb), cast(:composite_detail as jsonb)
                 )
             """),
-            {
-                "region_id":       analysis_id,
-                "lat":             cell.location.lat,
-                "lng":             cell.location.lng,
-                "cell_polygon":    json.dumps(cell.location.cell_polygon),
-                "composite":       cell.composite_score.composite,
-                "power":           cell.scores.get("power"),
-                "water":           cell.scores.get("water"),
-                "geological":      cell.scores.get("geological"),
-                "climate":         cell.scores.get("climate"),
-                "connectivity":    cell.scores.get("connectivity"),
-                "economic":        cell.scores.get("economic"),
-                "environmental":   cell.scores.get("environmental"),
-                "metrics":         json.dumps(cell.metrics.model_dump()),
-                "composite_detail":json.dumps(cell.composite_score.model_dump()),
-            },
+            params
         )
 
     await db.commit()
@@ -257,10 +262,32 @@ async def _build_and_cache_layers(
 
     expires = datetime.now(timezone.utc) + timedelta(hours=settings.CACHE_TTL_HOURS)
 
-    for layer_id, builder in builders.items():
+    loop = asyncio.get_running_loop()
+
+    def bake(lid, bld):
+        return lid, bld.build(grid_cells)
+
+    tasks = [
+        loop.run_in_executor(None, bake, layer_id, builder)
+        for layer_id, builder in builders.items()
+    ]
+
+    try:
+        results = await asyncio.gather(*tasks)
+    except Exception as e:
+        logger.warning(f"Layer building failed concurrently: {e}")
+        return
+
+    params = []
+    for layer_id, geojson in results:
+        params.append({
+            "key":     f"layer:{layer_id}:{analysis_id}",
+            "data":    json.dumps(geojson),
+            "expires": expires,
+        })
+        
+    if params:
         try:
-            geojson = builder.build(grid_cells)
-            cache_key = f"layer:{layer_id}:{analysis_id}"
             await db.execute(
                 text("""
                     INSERT INTO integration_cache (cache_key, data, expires_at)
@@ -269,14 +296,10 @@ async def _build_and_cache_layers(
                         SET data = EXCLUDED.data,
                             expires_at = EXCLUDED.expires_at
                 """),
-                {
-                    "key":     cache_key,
-                    "data":    json.dumps(geojson),
-                    "expires": expires,
-                },
+                params
             )
-            logger.debug(f"Cached layer {layer_id} for analysis {analysis_id}")
+            logger.debug(f"Cached all 8 layers for analysis {analysis_id}")
         except Exception as e:
-            logger.warning(f"Layer build/cache failed for '{layer_id}': {e}")
+            logger.warning(f"Batched layer cache insert failed: {e}")
 
     await db.commit()
