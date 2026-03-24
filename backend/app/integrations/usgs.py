@@ -25,8 +25,8 @@ USGS_ELEVATION_URL = "https://epqs.nationalmap.gov/v1/json"
 class USGSClient(BaseIntegrationClient):
     """USGS seismic hazard and elevation client."""
 
-    def __init__(self, redis_client=None, settings=None):
-        super().__init__(redis_client, settings)
+    def __init__(self, db_session=None, settings=None):
+        super().__init__(db_session, settings)
         self.source_name = "usgs"
 
     # ── Region-level batch (one call per analysis region) ─────────────────────

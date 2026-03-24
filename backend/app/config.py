@@ -2,18 +2,18 @@
 app/config.py
 ─────────────
 Application configuration loaded from environment variables.
-Uses pydantic-settings so every variable has type validation and a clear default.
+Uses pydantic-settings for type validation and clear defaults.
 
-All settings are available via:
+Import everywhere as:
     from app.config import settings
     settings.DATABASE_URL
     settings.MOCK_INTEGRATIONS
 """
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator
 from typing import Literal
-import os
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -24,16 +24,14 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ── Application ──────────────────────────────────────────────────────────
+    # ── Application ───────────────────────────────────────────────────────────
     ENVIRONMENT: Literal["development", "production"] = "development"
     LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     MOCK_INTEGRATIONS: bool = False
 
-    # ── Database ──────────────────────────────────────────────────────────────
+    # ── Database (Supabase PostgreSQL) ────────────────────────────────────────
+    # Get from: supabase.com → project → Settings → Database → URI connection string
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/datacenter"
-
-    # ── Redis ─────────────────────────────────────────────────────────────────
-    REDIS_URL: str = "redis://localhost:6379"
 
     # ── Google Cloud ──────────────────────────────────────────────────────────
     GOOGLE_CLOUD_PROJECT: str = "local-dev"
@@ -41,16 +39,16 @@ class Settings(BaseSettings):
     GEE_SERVICE_ACCOUNT: str = ""
     GEE_KEY_FILE: str = ""
 
-    # ── External API Keys ─────────────────────────────────────────────────────
-    EIA_API_KEY: str = ""
-    CENSUS_API_KEY: str = ""
-    NOAA_API_KEY: str = ""
-    AIRNOW_API_KEY: str = ""
+    # ── External API Keys (all free) ──────────────────────────────────────────
+    EIA_API_KEY: str = ""        # api.eia.gov
+    CENSUS_API_KEY: str = ""     # api.census.gov
+    NOAA_API_KEY: str = ""       # ncei.noaa.gov
+    AIRNOW_API_KEY: str = ""     # airnowapi.org
 
-    # ── Caching ───────────────────────────────────────────────────────────────
+    # ── Cache TTLs ────────────────────────────────────────────────────────────
     CACHE_TTL_HOURS: int = 24
-    GEE_CACHE_TTL_HOURS: int = 168
-    LISTINGS_CACHE_TTL_HOURS: int = 168
+    GEE_CACHE_TTL_HOURS: int = 168       # 7 days — GEE data changes slowly
+    LISTINGS_CACHE_TTL_HOURS: int = 168  # 7 days — listing data refreshed weekly
 
     # ── Analysis defaults ─────────────────────────────────────────────────────
     GRID_RESOLUTION_DEFAULT_KM: float = 5.0

@@ -103,12 +103,12 @@ class ConnectivityScorer(BaseScorer):
 
     category_id = "connectivity"
 
-    def __init__(self, redis_client=None, settings=None):
+    def __init__(self, db_session=None, settings=None):
         from app.integrations.osm import OSMClient
         from app.config import settings as default_settings
 
         self.settings = settings or default_settings
-        self.osm = OSMClient(redis_client=redis_client, settings=self.settings)
+        self.osm = OSMClient(db_session=db_session, settings=self.settings)
 
     async def score(self, bbox: BoundingBox) -> list[CellScore]:
         """

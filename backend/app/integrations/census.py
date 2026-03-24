@@ -59,8 +59,8 @@ MOCK_TECH_WORKERS = {
 class CensusClient(BaseIntegrationClient):
     """US Census Bureau API client."""
 
-    def __init__(self, redis_client=None, settings=None):
-        super().__init__(redis_client, settings)
+    def __init__(self, db_session=None, settings=None):
+        super().__init__(db_session, settings)
         self.source_name = "census"
 
     def _api_key(self) -> str:

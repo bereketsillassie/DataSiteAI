@@ -191,7 +191,7 @@ export function AnalysisPanel({ selectedLocation }: AnalysisPanelProps) {
         <div className="rounded-2xl bg-background/70 backdrop-blur-xl border border-amber-500/20 shadow-2xl shadow-black/30 p-4 flex items-start gap-2">
           <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Could not score this location. Try clicking within the continental US, or check that the backend is running on port 8001.
+            Unable to score location. Check that the backend is running on port 8001.
           </p>
         </div>
       )}

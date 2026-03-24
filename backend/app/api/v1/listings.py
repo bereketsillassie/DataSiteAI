@@ -16,9 +16,8 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-import redis.asyncio as aioredis
 
-from app.dependencies import get_db, get_redis
+from app.dependencies import get_db
 from app.models.responses import ListingsResponse
 
 logger = logging.getLogger(__name__)
@@ -69,7 +68,6 @@ async def get_listings(
     ),
     limit: int = Query(20, ge=1, le=100, description="Maximum number of listings to return"),
     db: AsyncSession = Depends(get_db),
-    redis_client: Optional[aioredis.Redis] = Depends(get_redis),
 ) -> ListingsResponse:
     # Must provide either analysis_id or lat+lng
     if not analysis_id and (lat is None or lng is None):

@@ -126,12 +126,12 @@ class EconomicScorer(BaseScorer):
 
     category_id = "economic"
 
-    def __init__(self, redis_client=None, settings=None):
+    def __init__(self, db_session=None, settings=None):
         from app.integrations.census import CensusClient
         from app.config import settings as default_settings
 
         self.settings = settings or default_settings
-        self.census = CensusClient(redis_client=redis_client, settings=self.settings)
+        self.census = CensusClient(db_session=db_session, settings=self.settings)
 
     async def score(self, bbox: BoundingBox) -> list[CellScore]:
         """Score all grid cells in the bbox for economic factors."""
